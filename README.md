@@ -1,2 +1,2 @@
-# -ios_rule_script
+# ios_rule_script
 script
