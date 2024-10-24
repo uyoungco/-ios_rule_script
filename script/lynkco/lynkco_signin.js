@@ -102,7 +102,7 @@ function checkIn(cookie, body) {
     //   }
     // }
   } else {
-    const allSessions = $.data.allSessionNames(dingDongCookieKey);
+    const allSessions = $.data.allSessionNames(lynkcoTokenKey);
     if (!allSessions || allSessions.length <= 0) {
       const msg = "没有需要执行的Cookies，请先打开APP获取";
       $.logger.warning(msg);
