@@ -1,7 +1,59 @@
 const scriptName = 'LynkCo';
-const caKey = '204644386';
+const xCaKey = '204644386';
 const lynkcoTokenKey = 'lynkco_signin_token';
+const lynkcoMiYao = 'QCl7udM3PB9cOIOwquwPglikFQnzJRsX'
 const $ = MagicJS(scriptName, "INFO");
+
+function buildUrl({ header, url, data }) {
+  function getContentType(header) {
+    return header['content-type'] || '';
+  }
+
+  function extractQueryParams(url) {
+    const queryString = url.split("?")[1];
+    const params = {};
+    if (queryString) {
+      queryString.split("&").forEach(param => {
+        const [key, value] = param.split("=");
+        params[key] = value ? decodeURIComponent(value) : value;
+      });
+    }
+    return params;
+  }
+
+  function buildQueryString(paramsMap) {
+    if (!paramsMap || paramsMap.size === 0) return '';
+    return Array.from(paramsMap.keys())
+      .sort()
+      .map(key => paramsMap.get(key) ? `${key}=${paramsMap.get(key)}` : key)
+      .join("&");
+  }
+
+  const baseUrl = url.split("?")[0];
+  const paramsMap = new Map();
+  const contentType = getContentType(header);
+
+  if (contentType && contentType.startsWith("application/x-www-form-urlencoded") && data) {
+    Object.keys(data).forEach(key => {
+      paramsMap.set(key, data[key]);
+    });
+  }
+
+  const queryParams = extractQueryParams(url);
+  for (const key in queryParams) {
+    paramsMap.set(key, queryParams[key]);
+  }
+
+  const queryString = buildQueryString(paramsMap);
+  return queryString ? `${baseUrl}?${queryString}` : url;
+}
+
+function generateXCaNonce() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(e) {
+      const n = 16 * Math.random() | 0;
+      return (e === "x" ? n : (3 & n) | 8).toString(16);
+  });
+}
 
 
 function getUserId(cookie) {
