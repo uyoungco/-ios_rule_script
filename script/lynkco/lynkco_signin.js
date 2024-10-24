@@ -6352,32 +6352,16 @@ X-Ca-Timestamp:${timestamp}
 ;(async () => {
 
   if ($.isRequest && getCookieRegex.test($.request.url)) {
-    const cookie = $.request.headers.Cookie;
-    const body = $.request.url.split('?')[1];
-    // 获取UserId
-    const userId = await $.utils.retry(getUserId, 3, 500)(cookie).catch(err => {
-      $.notification.post(err);
-      $.done();
-    })
-    let hisCookie = $.data.read(dingDongCookieKey, "", userId);
-    if (cookie !== hisCookie) {
-      $.data.write(dingDongCookieKey, cookie, userId);
-      $.data.write(dingDongBodyKey, body, userId);
-      $.logger.info(`旧的Cookie：${hisCookie}\n新的Cookie：${cookie}\nCookie不同，写入新的Cookie成功！`);
+    const token = $.request.headers.Token;
+
+    let hisToken = $.data.read(lynkcoTokenKey, "");
+    if (token !== hisToken) {
+      $.data.write(lynkcoTokenKey, token);
+      $.logger.info(`旧的Token：${hisToken}\n新的Token：${token}\nToken不同，写入新的Token成功！`);
       $.notification.post("🎈Cookie写入成功！！");
     } else {
-      $.logger.info("Cookie没有变化，无需更新");
+      $.logger.info("Token没有变化，无需更新");
     }
-    // 同步Cookies至青龙面板
-    // if ($.data.read(dingDongSyncQinglongKey, false) === true) {
-    //   hisCookie = await $.qinglong.read(dingDongCookieKey, "", userId);
-    //   if (cookie !== hisCookie) {
-    //     await $.qinglong.write(dingDongCookieKey, cookie, userId);
-    //     await $.qinglong.write(dingDongBodyKey, body, userId);
-    //     $.logger.info(`旧的Cookie：${hisCookie}\n新的Cookie：${cookie}\nCookie不同，写入新的Cookie成功！`);
-    //     $.notification.post("🎈Cookie同步到青龙面板成功！！");
-    //   }
-    // }
   } else {
     const allSessions = $.data.allSessionNames(lynkcoTokenKey);
     if (!allSessions || allSessions.length <= 0) {
@@ -6385,18 +6369,19 @@ X-Ca-Timestamp:${timestamp}
       $.logger.warning(msg);
       $.notification.post(msg);
     } else {
-      $.logger.info(`当前共 ${allSessions.length} 个Cookies需要执行`);
-      for (let [index, session] of allSessions.entries()) {
-        $.logger.info(`开始执行第 ${index + 1} 个Cookies的作业`);
-        currentCookie = $.data.read(dingDongCookieKey, "", session);
-        currentBody = $.data.read(dingDongBodyKey, "", session);
-        await $.utils.retry(checkIn, 3, 1000)(currentCookie, currentBody).then(msg => {
-          $.notification.post(msg);
-        }).catch(err => {
-          $.notification.post(err);
-        })
-        $.logger.info(`第 ${index + 1} 个Cookies的作业执行完毕`);
-      }
+      $.logger.info(`当前共 ${allSessions.length} 个Token需要执行`);
+			console.log('allSessions', allSessions)
+      // for (let [index, session] of allSessions.entries()) {
+      //   $.logger.info(`开始执行第 ${index + 1} 个Cookies的作业`);
+      //   token = $.data.read(dingDongCookieKey, "", session);
+      //   currentBody = $.data.read(dingDongBodyKey, "", session);
+      //   await $.utils.retry(checkIn, 3, 1000)(currentCookie, currentBody).then(msg => {
+      //     $.notification.post(msg);
+      //   }).catch(err => {
+      //     $.notification.post(err);
+      //   })
+      //   $.logger.info(`第 ${index + 1} 个Cookies的作业执行完毕`);
+      // }
     }
   }
   $.done();
