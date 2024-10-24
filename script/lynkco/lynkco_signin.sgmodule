@@ -1,0 +1,10 @@
+#!name=LynkCo
+#!desc=LynkCo每日自动签到
+#!system=ios
+
+[Script]
+LynkCo_每日签到 = type=cron,cronexp=20 0 * * *,timeout=30,script-path=https://github.com/uyoungco/ios_rule_script/master/script/lynkco/lynkco_signin.js
+LynkCo_获取token = type=http-request,pattern=^https?:\/\/maicai\.api\.ddxq\.mobi\/point\/home\?api_version,script-path=https://github.com/uyoungco/ios_rule_script/master/script/lynkco/lynkco_signin.js
+
+[MITM]
+hostname = %APPEND% maicai.api.ddxq.mobi
