@@ -35,8 +35,8 @@ function shareReporting(shareCode) {
 ;(async () => {
 	// 匹配到域名获取分享code
   if ($.isResponse && getShareCodeRegex.test($.request.url)) {
-    const shareCode = $.response.data.data;
-		console.log('data', $.request)
+		console.log('data', $.response)
+    const shareCode = $.response.body.data;
 
     let hisShareCode = $.data.read(lynkcoShareCode);
     if (shareCode !== hisShareCode) {
