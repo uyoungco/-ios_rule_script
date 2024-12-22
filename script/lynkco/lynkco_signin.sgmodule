@@ -4,7 +4,7 @@
 
 [Script]
 LynkCo_每日分享 = type=cron,cronexp=20 0 * * *,timeout=30,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_signin.js
-LynkCo_获取分享ShareCode = type=http-response,pattern=^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_signin.js,debug=true
+LynkCo_获取分享ShareCode = type=http-response,requires-body=1,max-size=0,pattern=^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_signin.js
 
 [MITM]
 hostname = %APPEND% app-services.lynkco.com.cn
