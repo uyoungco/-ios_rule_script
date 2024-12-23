@@ -1,0 +1,10 @@
+#!name=LynkCo每日分享
+#!desc=LynkCo每日分享
+#!system=ios
+
+[Script]
+LynkCo每日分享 = type=cron,cronexp=20 0 * * *,timeout=30,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_share.js
+LynkCo每日分享 = type=http-response,requires-body=1,max-size=0,pattern=^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_share.js
+
+[MITM]
+hostname = %APPEND% app-services.lynkco.com.cn

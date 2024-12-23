@@ -4,6 +4,7 @@ const $ = MagicJS(scriptName, "INFO");
 const getShareCodeRegex = /^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode/;
 
 function shareReporting(shareCode) {
+	console.log('shareCode', shareCode)
   return new Promise((resolve, reject) => {
     $.http.post({
 			url: `https://h5.lynkco.com/app/v1/task/shareReporting?shareCode=${shareCode}`,
@@ -11,7 +12,8 @@ function shareReporting(shareCode) {
 				'User-Agent': 'Apifox/1.0.0 (https://apifox.com)', 
 				'Accept': '*/*',
 				'Host': 'h5.lynkco.com',
-				'Connection': 'keep-alive'
+				'Connection': 'keep-alive',
+				'content-type': "application/json;charset=UTF-8",
       },
     }).then(resp => {
 			console.log('resp', resp)
@@ -54,6 +56,7 @@ function shareReporting(shareCode) {
       $.notification.post(msg);
     } else {
 			// 执行分享
+			$.logger.info("执行分享");
 			await $.utils.retry(shareReporting, 3, 1000)(shareCode).then(msg => {
 				$.notification.post(msg);
 			}).catch(err => {
