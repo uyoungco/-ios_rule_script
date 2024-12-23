@@ -1,118 +1,75 @@
-/*
-#!name=LynkCo每日分享
-#!desc=LynkCo每日分享
-#!system=ios
+const lk = new ToolKit('工具包使用示例', 'ToolKitDemo', {"httpApi": {ipad: "ffff@10.0.0.5:6166", "15pro": "ffff@10.0.0.6:6166"}})
 
-[Script]
-LynkCo每日分享 = type=cron,cronexp=20 0 * * *,timeout=30,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_share.js
-LynkCo每日分享 = type=http-response,requires-body=1,max-size=0,pattern=^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode,script-path=https://raw.githubusercontent.com/uyoungco/ios_rule_script/refs/heads/main/script/lynkco/lynkco_share.js
+const main = async () => {
+    let test = lk.getVal("test")
+    lk.msg(``, `这是通知内容:${test}`)
+    lk.setVal("test", "hello")
+    test = lk.getVal("test")
+    lk.msg(``, `这是通知内容:${test}`)
 
-[MITM]
-hostname = %APPEND% app-services.lynkco.com.cn
-*/
-
-const lynkcoShareCode = 'lynkco_share_code';
-const getShareCodeRegex = /^https?:\/\/app-services\.lynkco\.com\.cn\/app\/v1\/task\/getShareCode/;
-
-const lk = new ToolKit("领克分享", `LynkCoShare`, { "iphone16": "ffff@10.0.0.5:6166" })
-lk.userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 D/C501C6D2-FAF6-4DA8-B65B-7B8B392901EB"
-
-
-function shareReporting(shareCode) {
-  return new Promise((resolve, _reject) => {
-    const t = '获取token'
-    let url = {
-      url: `https://h5.lynkco.com/app/v1/task/shareReporting?shareCode=${shareCode}`,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-      }
-    }
-
-    lk.post(url, (error, _response, data) => {
-      try {
-        if (error) {
-          lk.execFail()
-          lk.appendNotifyInfo(`❌${t}失败，请稍后再试`)
-        } else {
-          let dataObj = data.o()
-          lk.log("dataObj", dataObj);
-          if (dataObj.data !== '验证码失效') {
-            lk.appendNotifyInfo(dataObj.data)
-            lk.log("dataObj", dataObj);
-            // aliYunPanToken = `Bearer ${dataObj["access_token"]}`
-            // aliYunPanRefreshToken = dataObj["refresh_token"]
-            // lk.setVal(aliYunPanTokenKey, aliYunPanToken)
-            // lk.setVal(aliYunPanRefreshTokenKey, aliYunPanRefreshToken)
-          } else {
-            lk.execFail()
-            lk.appendNotifyInfo(dataObj.data)
-          }
-        }
-      } catch (e) {
-        lk.logErr(e)
-        lk.log(`${t}返回数据：${data}`)
-        lk.execFail()
-        lk.appendNotifyInfo(`❌${t}错误，请带上日志联系作者，或稍后再试`)
-      } finally {
-        resolve()
-      }
+    // 生成boxjs配置.json
+    lk.boxJsJsonBuilder({
+        "icons": [
+            "https://raw.githubusercontent.com/Orz-3/mini/master/toolkitdemo.png",
+            "https://raw.githubusercontent.com/Orz-3/task/master/toolkitdemo.png"
+        ]
+    }, {
+        "author": "@lowking",
+        // "repo": "https://github.com/lowking/Scripts",
+        // "script_url": "https://github.com/lowking/Scripts/blob/master/util/example/ToolKitDemo.js"
     })
-  })
+
+    // 可以点击打开url的通知
+    lk.msg(``, `可点击跳转`, `https://baidu.com`)
+
+    // 记录通知内容
+    lk.appendNotifyInfo(`通知1`)
+    lk.appendNotifyInfo(`通知2`)
+
+    // 插入到通知内容第一行
+    lk.prependNotifyInfo(`通知0`)
+
+    // 复制文本
+    lk.msg(``,
+        `可点击复制`,
+        'https://baidu.com',
+        'https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxSetting.png',
+        '要复制的文本')
+
+    // 通知显示媒体信息，10秒后通知自动消失（仅限surge）
+    lk.msg(``,
+        `显示媒体信息5秒后消失`,
+        '',
+        'https://raw.githubusercontent.com/chavyleung/scripts/master/box/icons/BoxSetting.png',
+        '',
+        5)
+    await lk.req.get(`http://timor.tech/api/holiday/info/${lk.formatDate(lk.now, "yyyy-MM-dd")}`)
+        .then(({ error, resp, data }) => {
+            lk.log(`error: ${error}\nresp: ${resp.s()}\ndata: ${data}`)
+        })
+
+    // 最后一次性输出
+    lk.msg(``)
+    let obj = {
+        test: "test"
+    }
+    lk.log(obj.s(null, 2))
+    await lk.randomSleep(1000, 5000)
 }
 
+// 支持surge的通过httpApi直接在手机测试脚本：node ToolKitDemo.js p，即可；
+// 如果在命令行下，则根据配置生成boxjs的配置json
+if (!lk.isExecComm) main().catch((err) => {
+    lk.logErr(err)
+    lk.execFail()
+    lk.msg(``, err)
+}).finally(() => {
+    lk.done()
+})
 
-
-;(async () => {
-	// 匹配到域名获取分享code
-  if (!lk.isExecComm && lk.isRequest() && getShareCodeRegex.test(lk.getRequestUrl())) {
-    const data = lk.getResponseBody();
-    lk.log('data', data)
-    const hisShareCode = lk.getVal(lynkcoShareCode);
-    try {
-      const shareCode = data.o().data
-      lk.log('shareCode', shareCode)
-      if (shareCode !== hisShareCode) {
-        lk.setVal(lynkcoShareCode, shareCode);
-        lk.log(`旧的Token：${hisShareCode}\n新的Token：${shareCode}\nToken不同，写入新的Token成功！`);
-        lk.appendNotifyInfo("🎈Token写入成功！！");
-      } else {
-        lk.log("Token没有变化，无需更新");
-        lk.appendNotifyInfo("Token没有变化，无需更新");
-      }
-    } catch (e) {
-      lk.execFail()
-      lk.logErr('❌获取shareCode失败')
-    }
-  } else {
-		console.log('lk', lk)
-    const shareCode = lk.getVal(lynkcoShareCode);
-    if (!shareCode) {
-      const msg = "没有需要执行的ShareCode，请先打开APP获取";
-      lk.logErr(msg);
-      lk.appendNotifyInfo(msg);
-    } else {
-			// 执行分享
-			lk.log("执行分享");
-      await shareReporting(shareCode)
-			// await $.utils.retry(shareReporting, 3, 1000)(shareCode).then(msg => {
-			// 	$.notification.post(msg);
-			// }).catch(err => {
-			// 	$.notification.post(err);
-			// })
-    }
-  }
-  lk.msg(``)
-  lk.done();
-})();
-
-
-
-
-
-
-
+// * ToolKit v1.3.2 build 140
 function ToolKit(scriptName,scriptId,options){class Request{constructor(tk){this.tk=tk}fetch(options,method="GET"){options=typeof options=="string"?{url:options}:options;let fetcher;switch(method){case"PUT":fetcher=this.put;break;case"POST":fetcher=this.post;break;default:fetcher=this.get}const doFetch=new Promise((resolve,reject)=>{fetcher.call(this,options,(error,resp,data)=>error?reject({error,resp,data}):resolve({error,resp,data}))}),delayFetch=(promise,timeout=5e3)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("请求超时")),timeout))]);return options.timeout>0?delayFetch(doFetch,options.timeout):doFetch}async get(options){return this.fetch.call(this.tk,options)}async post(options){return this.fetch.call(this.tk,options,"POST")}async put(options){return this.fetch.call(this.tk,options,"PUT")}}return new class{constructor(scriptName,scriptId,options){Object.prototype.s=function(replacer,space){return typeof this=="string"?this:JSON.stringify(this,replacer,space)},Object.prototype.o=function(reviver){return JSON.parse(this,reviver)},this.userAgent=`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.2 Safari/605.1.15`,this.a=`lk`,this.name=scriptName,this.id=scriptId,this.req=new Request(this),this.data=null,this.b=this.fb(`${this.a}${this.id}.dat`),this.c=this.fb(`${this.a}${this.id}.boxjs.json`),this.d=options,this.isExecComm=!1,this.f=this.getVal(`${this.a}IsEnableLog${this.id}`),this.f=!!this.isEmpty(this.f)||this.f.o(),this.g=this.getVal(`${this.a}NotifyOnlyFail${this.id}`),this.g=!this.isEmpty(this.g)&&this.g.o(),this.h=this.getVal(`${this.a}IsEnableTgNotify${this.id}`),this.h=!this.isEmpty(this.h)&&this.h.o(),this.i=this.getVal(`${this.a}TgNotifyUrl${this.id}`),this.h=this.h?!this.isEmpty(this.i):this.h,this.j=`${this.a}CostTotalString${this.id}`,this.k=this.getVal(this.j),this.k=this.isEmpty(this.k)?`0,0`:this.k.replace('"',""),this.l=this.k.split(",")[0],this.m=this.k.split(",")[1],this.n=0,this.o=`
-██`,this.p="  ",this.now=new Date,this.q=this.now.getTime(),this.node=(()=>{if(this.isNode()){const request=require("request");return{request}}return null})(),this.r=!0,this.s=[],this.t="chavy_boxjs_cur__acs",this.u="chavy_boxjs__acs",this.v={"|`|":",backQuote,"},this.w={",backQuote,":"`","%2CbackQuote%2C":"`"},this.y={"_":"\\_","*":"\\*","`":"\\`"},this.x={"_":"\\_","*":"\\*","[":"\\[","]":"\\]","(":"\\(",")":"\\)","~":"\\~","`":"\\`",">":"\\>","#":"\\#","+":"\\+","-":"\\-","=":"\\=","|":"\\|","{":"\\{","}":"\\}",".":"\\.","!":"\\!"},this.log(`${this.name}, 开始执行!`),this.fd()}fb(_a){if(!this.isNode())return _a;let _b=process.argv.slice(1,2)[0].split("/");return _b[_b.length-1]=_a,_b.join("/")}fc(_a){const _c=this.path.resolve(_a),_d=this.path.resolve(process.cwd(),_a),_e=this.fs.existsSync(_c),_f=!_e&&this.fs.existsSync(_d);return{_c,_d,_e,_f}}async fd(){if(!this.isNode())return;if(this.e=process.argv.slice(1),this.e[1]!="p")return;this.isExecComm=!0,this.log(`开始执行指令【${this.e[1]}】=> 发送到其他终端测试脚本!`);let httpApi=this.d?.httpApi,_h;if(this.isEmpty(this?.d?.httpApi))this.log(`未设置options,使用默认值`),this.isEmpty(this?.d)&&(this.d={}),this.d.httpApi=`ffff@10.0.0.6:6166`,httpApi=this.d.httpApi,_h=httpApi.split("@")[1];else{if(typeof httpApi=="object")if(_h=this.isNumeric(this.e[2])?this.e[3]||"unknown":this.e[2],httpApi[_h])httpApi=httpApi[_h];else{const keys=Object.keys(httpApi);keys[0]?(_h=keys[0],httpApi=httpApi[keys[0]]):httpApi="error"}if(!/.*?@.*?:[0-9]+/.test(httpApi)){this.log(`❌httpApi格式错误!格式: ffff@3.3.3.18:6166`),this.done();return}}this.fe(this.e[2],_h,httpApi)}fe(timeout,_h,httpApi){let _i=this.e[0];const[_j,_k]=httpApi.split("@");this.log(`获取【${_i}】内容传给【${_h}】`),this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const{_c,_d,_e,_f}=this.fc(_i);if(!_e&&!_f){lk.done();return}const _m=_e?_c:_d;let options={url:`http://${_k}/v1/scripting/evaluate`,headers:{"X-Key":_j},body:{script_text:new String(this.fs.readFileSync(_m)),mock_type:"cron",timeout:!this.isEmpty(timeout)&&timeout>5?timeout:5},json:!0};this.req.post(options).then(({error,resp,data})=>{this.log(`已将脚本【${_i}】发给【${_h}】,执行结果: 
+██`,this.p="  ",this.now=new Date,this.q=this.now.getTime(),this.node=(()=>{if(this.isNode()){const request=require("request");return{request}}return null})(),this.r=!0,this.s=[],this.t="chavy_boxjs_cur__acs",this.u="chavy_boxjs__acs",this.v={"|`|":",backQuote,"},this.w={",backQuote,":"`","%2CbackQuote%2C":"`"},this.y={"_":"\\_","*":"\\*","`":"\\`"},this.x={"_":"\\_","*":"\\*","[":"\\[","]":"\\]","(":"\\(",")":"\\)","~":"\\~","`":"\\`",">":"\\>","#":"\\#","+":"\\+","-":"\\-","=":"\\=","|":"\\|","{":"\\{","}":"\\}",".":"\\.","!":"\\!"},this.log(`${this.name}, 开始执行!`),this.fd()}fb(_a){if(!this.isNode())return _a;let _b=process.argv.slice(1,2)[0].split("/");return _b[_b.length-1]=_a,_b.join("/")}fc(_a){const _c=this.path.resolve(_a),_d=this.path.resolve(process.cwd(),_a),_e=this.fs.existsSync(_c),_f=!_e&&this.fs.existsSync(_d);return{_c,_d,_e,_f}}async fd(){if(!this.isNode())return;if(this.e=process.argv.slice(1),this.e[1]!="p")return;this.isExecComm=!0,this.log(`开始执行指令【${this.e[1]}】=> 发送到其他终端测试脚本!`);let httpApi=this.d?.httpApi,_h;if(this.isEmpty(this?.d?.httpApi))this.log(`未设置options,使用默认值`),this.isEmpty(this?.d)&&(this.d={}),this.d.httpApi=`ffff@10.0.0.6:6166`,httpApi=this.d.httpApi,_h=httpApi.split("@")[1];else{if(typeof httpApi=="object")if(_h=this.isNumeric(this.e[2])?this.e[3]||"unknown":this.e[2],httpApi[_h])httpApi=httpApi[_h];else{const keys=Object.keys(httpApi);keys[0]?(_h=keys[0],httpApi=httpApi[keys[0]]):httpApi="error"}if(!/.*?@.*?:[0-9]+/.test(httpApi)){this.log(`❌httpApi格式错误!格式: ffff@3.3.3.18:6166`),this.done();return}}this.fe(this.e[2],_h,httpApi)}fe(timeout,_h,httpApi){let _i=this.e[0];const[_j,_k]=httpApi.split("@");this.log(`获取【${_i}】内容传给【${_h}】`),this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const{_c,_d,_e,_f}=this.fc(_i);if(!_e&&!_f){lk.done();return}const _m=_e?_c:_d;let options={url:`http://${_k}/v1/scripting/evaluate`,headers:{"X-Key":_j},body:{script_text:String(this.fs.readFileSync(_m)),mock_type:"cron",timeout:!this.isEmpty(timeout)&&timeout>5?timeout:5},json:!0};this.req.post(options).then(({error,resp,data})=>{this.log(`已将脚本【${_i}】发给【${_h}】,执行结果: 
 ${this.p}error: ${error}
 ${this.p}resp: ${resp?.s()}
 ${this.p}data: ${this.fj(data)}`),this.done()})}boxJsJsonBuilder(info,param){if(!this.isNode())return;if(!this.isJsonObject(info)||!this.isJsonObject(param)){this.log("构建BoxJsJson传入参数格式错误,请传入json对象");return}let _p=param?.targetBoxjsJsonPath||"/Users/lowking/Desktop/Scripts/lowking.boxjs.json";if(!this.fs.existsSync(_p))return;this.log("using node");let _q=["settings","keys"];const _r="https://raw.githubusercontent.com/Orz-3";let boxJsJson={},scritpUrl="#lk{script_url}";if(boxJsJson.id=`${this.a}${this.id}`,boxJsJson.name=this.name,boxJsJson.desc_html=`⚠️使用说明</br>详情【<a href='${scritpUrl}?raw=true'><font class='red--text'>点我查看</font></a>】`,boxJsJson.icons=[`${_r}/mini/master/Alpha/${this.id.toLocaleLowerCase()}.png`,`${_r}/mini/master/Color/${this.id.toLocaleLowerCase()}.png`],boxJsJson.keys=[],boxJsJson.settings=[{id:`${this.a}IsEnableLog${this.id}`,name:"开启/关闭日志",val:!0,type:"boolean",desc:"默认开启"},{id:`${this.a}NotifyOnlyFail${this.id}`,name:"只当执行失败才通知",val:!1,type:"boolean",desc:"默认关闭"},{id:`${this.a}IsEnableTgNotify${this.id}`,name:"开启/关闭Telegram通知",val:!1,type:"boolean",desc:"默认关闭"},{id:`${this.a}TgNotifyUrl${this.id}`,name:"Telegram通知地址",val:"",type:"text",desc:"Tg的通知地址,如: https://api.telegram.org/bot-token/sendMessage?chat_id=-100140&parse_mode=Markdown&text="}],boxJsJson.author="#lk{author}",boxJsJson.repo="#lk{repo}",boxJsJson.script=`${scritpUrl}?raw=true`,!this.isEmpty(info))for(let key of _q){if(this.isEmpty(info[key]))break;if(key==="settings")for(let i=0;i<info[key].length;i++){let input=info[key][i];for(let j=0;j<boxJsJson.settings.length;j++){let def=boxJsJson.settings[j];input.id===def.id&&boxJsJson.settings.splice(j,1)}}boxJsJson[key]=boxJsJson[key].concat(info[key]),delete info[key]}Object.assign(boxJsJson,info),this.fs=this.fs?this.fs:require("fs"),this.path=this.path?this.path:require("path");const{_c,_d,_e,_f}=this.fc(this.c),_g=boxJsJson.s(null,"	");_e?this.fs.writeFileSync(_c,_g):_f?this.fs.writeFileSync(_d,_g):this.fs.writeFileSync(_c,_g);let boxjsJson=this.fs.readFileSync(_p).o();if(!boxjsJson?.apps||!Array.isArray(boxjsJson.apps)){this.log(`⚠️请在boxjs订阅json文件中添加根属性: apps, 否则无法自动构建`);return}let apps=boxjsJson.apps,targetIdx=apps.indexOf(apps.filter(app=>app.id==boxJsJson.id)[0]);targetIdx>=0?boxjsJson.apps[targetIdx]=boxJsJson:boxjsJson.apps.push(boxJsJson);let ret=boxjsJson.s(null,2);if(!this.isEmpty(param))for(const key in param){let val=param[key];if(!val)switch(key){case"author":val="@lowking";break;case"repo":val="https://github.com/lowking/Scripts";break;default:continue}ret=ret.replaceAll(`#lk{${key}}`,val)}const regex=/(?:#lk\{)(.+?)(?=\})/;let m=regex.exec(ret);m!==null&&this.log(`⚠️生成BoxJs还有未配置的参数,请参考:
